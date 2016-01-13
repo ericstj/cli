@@ -91,14 +91,8 @@ $BinariesForCoreHost | ForEach-Object {
 header "Crossgening Roslyn compiler ..."
 _cmd "$RepoRoot\scripts\crossgen\crossgen_roslyn.cmd ""$OutputDir"""
 
-# Copy dnx into stage OutputDir
-cp -rec "$DnxRoot\" "$OutputDir\bin\dnx\"
-
 # Copy in the dotnet-nuget3 script
 cp "$RepoRoot\scripts\dotnet-nuget3.cmd" "$OutputDir\bin\dotnet-nuget3.cmd"
-
-# Copy in the dotnet-dnx script
-cp "$RepoRoot\scripts\dotnet-dnx.cmd" "$OutputDir\bin\dotnet-dnx.cmd"
 
 # Copy in AppDeps
 $env:PATH = "$OutputDir\bin;$StartPath"

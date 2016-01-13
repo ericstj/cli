@@ -34,7 +34,7 @@ namespace Microsoft.DotNet.Tools.Restore
 
             // Parse --quiet, because we have to handle that specially since NuGet3 has a different
             // "--verbosity" switch that goes BEFORE the command
-            bool quiet = args.Any(s => s.Equals("--quiet", StringComparison.OrdinalIgnoreCase));
+            var quiet = args.Any(s => s.Equals("--quiet", StringComparison.OrdinalIgnoreCase));
             args = args.Where(s => !s.Equals("--quiet", StringComparison.OrdinalIgnoreCase)).ToArray();
 
             app.OnExecute(() =>
