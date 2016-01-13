@@ -30,18 +30,12 @@ namespace Microsoft.DotNet.Tools.Restore
                 FullName = ".NET project dependency restorer",
                 Description = "Restores dependencies listed in project.json"
             };
-
-            // Quiet has to be handled specially because NuGet has a different setting for verbosity
-            // and we can't just have consumers use it because of the way we wrap restore and the way
-            // the --verbosity setting works.
-            bool quiet = args.Contains("--quiet", StringComparer.OrdinalIgnoreCase);
-            args = args.Where(a => !string.Equals(a, "--quiet", StringComparison.OrdinalIgnoreCase)).ToArray();
-
+            
             app.OnExecute(() =>
             {
                 try
                 {
-                    var projectRestoreResult = Dnx.RunRestore(args, quiet);
+                    var projectRestoreResult = Dnx.RunRestore(args);
 
                     var restoreTasks = GetRestoreTasks(args);
 
@@ -49,7 +43,7 @@ namespace Microsoft.DotNet.Tools.Restore
                     {
                         var project = ProjectReader.GetProject(restoreTask.ProjectPath);
 
-                        RestoreTools(project, restoreTask, quiet);
+                        RestoreTools(project, restoreTask);
                     }
 
                     return projectRestoreResult;
@@ -106,19 +100,19 @@ namespace Microsoft.DotNet.Tools.Restore
             return firstArg.EndsWith(Project.FileName) && File.Exists(firstArg);
         }
 
-        private static void RestoreTools(Project project, RestoreTask restoreTask, bool quiet)
+        private static void RestoreTools(Project project, RestoreTask restoreTask)
         {
             foreach (var tooldep in project.Tools)
             {
-                RestoreTool(tooldep, restoreTask, quiet);
+                RestoreTool(tooldep, restoreTask);
             }
         }
 
-        private static void RestoreTool(LibraryRange tooldep, RestoreTask restoreTask, bool quiet)
+        private static void RestoreTool(LibraryRange tooldep, RestoreTask restoreTask)
         {
             var tempPath = Path.Combine(restoreTask.ProjectDirectory, Guid.NewGuid().ToString(), "bin");
 
-            RestoreToolToPath(tooldep, restoreTask.Arguments, tempPath, quiet);
+            RestoreToolToPath(tooldep, restoreTask.Arguments, tempPath);
 
             CreateDepsInPackageCache(tooldep, tempPath);
 
@@ -163,7 +157,7 @@ namespace Microsoft.DotNet.Tools.Restore
             File.Move(Path.Combine(context.ProjectDirectory, "bin" + FileNameSuffixes.Deps), depsPath);
         }
 
-        private static void RestoreToolToPath(LibraryRange tooldep, IEnumerable<string> args, string tempPath, bool quiet)
+        private static void RestoreToolToPath(LibraryRange tooldep, IEnumerable<string> args, string tempPath)
         {
             Directory.CreateDirectory(tempPath);
             var projectPath = Path.Combine(tempPath, Project.FileName);
@@ -172,7 +166,7 @@ namespace Microsoft.DotNet.Tools.Restore
 
             File.WriteAllText(projectPath, GenerateProjectJsonContents(new[] {"dnxcore50"}));
             Dnx.RunPackageInstall(tooldep, projectPath, args);
-            Dnx.RunRestore(new [] { $"\"{projectPath}\"", "--runtime", $"{DefaultRid}"}.Concat(args), quiet);
+            Dnx.RunRestore(new [] { $"\"{projectPath}\"", "--runtime", $"{DefaultRid}"}.Concat(args));
         }
 
         private static string GenerateProjectJsonContents(IEnumerable<string> frameworks = null)
