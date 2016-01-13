@@ -109,6 +109,10 @@ chmod -R a+r $OUTPUT_DIR
 # Copy DNX in to OUTPUT_DIR
 cp -R $DNX_ROOT $OUTPUT_DIR/bin/dnx
 
+# Copy and CHMOD the dotnet-nuget3 script
+cp $REPOROOT/scripts/dotnet-nuget3.sh $OUTPUT_DIR/bin/dotnet-nuget3
+chmod a+x $OUTPUT_DIR/bin/dotnet-nuget3
+
 # Copy and CHMOD the dotnet-dnx script
 cp $REPOROOT/scripts/dotnet-dnx.sh $OUTPUT_DIR/bin/dotnet-dnx
 chmod a+x $OUTPUT_DIR/bin/dotnet-dnx
