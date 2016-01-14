@@ -11,6 +11,7 @@
     "emitEntryPoint": true
   },
   "dependencies": {
+    "Microsoft.NETCore.Platforms": "1.0.1-rc2-23704",
     "Microsoft.NETCore.ConsoleHost": "1.0.0-rc2-23616",
     "Microsoft.NETCore.TestHost": "1.0.0-rc2-23616",
     "Microsoft.Extensions.Compilation.Abstractions": "1.0.0-*",
