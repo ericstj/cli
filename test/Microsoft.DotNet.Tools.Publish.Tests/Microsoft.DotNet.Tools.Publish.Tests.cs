@@ -37,6 +37,7 @@ namespace Microsoft.DotNet.Tools.Publish.Tests
         {
             // create unique directories in the 'temp' folder
             var root = Temp.CreateDirectory();
+            root.CopyFile(Path.Combine(_testProjectsRoot, "global.json"));
             var testAppDir = root.CreateDirectory("TestApp");
             var testLibDir = root.CreateDirectory("TestLibrary");
 
@@ -73,6 +74,7 @@ namespace Microsoft.DotNet.Tools.Publish.Tests
         {
             // create unique directories in the 'temp' folder
             var testDir = Temp.CreateDirectory();
+            testDir.CopyFile(Path.Combine(_testProjectsRoot, "global.json"));
             var testAppDir = Path.Combine(_testProjectsRoot, "TestAppWithContents");
 
             // copy projects to the temp dir
@@ -94,6 +96,7 @@ namespace Microsoft.DotNet.Tools.Publish.Tests
         {
             // create unique directories in the 'temp' folder
             var root = Temp.CreateDirectory();
+            root.CopyFile(Path.Combine(_testProjectsRoot, "global.json"));
             var testAppDir = root.CreateDirectory("TestApp");
             var testLibDir = root.CreateDirectory("TestLibrary");
 
@@ -111,6 +114,7 @@ namespace Microsoft.DotNet.Tools.Publish.Tests
         {
             // create unique directories in the 'temp' folder
             var root = Temp.CreateDirectory();
+            root.CopyFile(Path.Combine(_testProjectsRoot, "global.json"));
             var testLibDir = root.CreateDirectory("TestLibrary");
 
             //copy projects to the temp dir
@@ -133,6 +137,7 @@ namespace Microsoft.DotNet.Tools.Publish.Tests
         public void CompilationFailedTest()
         {
             var testDir = Temp.CreateDirectory();
+            testDir.CopyFile(Path.Combine(_testProjectsRoot, "global.json"));
             var compileFailDir = Path.Combine(_testProjectsRoot, "CompileFail");
 
             CopyProjectToTempDir(compileFailDir, testDir);
@@ -150,6 +155,7 @@ namespace Microsoft.DotNet.Tools.Publish.Tests
         {
             // create unique directories in the 'temp' folder
             var root = Temp.CreateDirectory();
+            root.CopyFile(Path.Combine(_testProjectsRoot, "global.json"));
             var testAppDir = root.CreateDirectory("TestApp");
             var testLibDir = root.CreateDirectory("TestLibrary");
 
