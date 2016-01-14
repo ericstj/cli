@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "Microsoft.NETCore.ConsoleHost": "1.0.0-beta-23409",
+    "Microsoft.NETCore.Platforms": "1.0.0-beta-23608",
     "NETStandard.Library": "1.0.0-rc2-23608",
     "System.Linq": "4.0.1-beta-23504",
     "System.Collections": "4.0.11-beta-23504",
@@ -26,7 +27,8 @@
       "type": "build"
     },
     "Microsoft.Extensions.Logging": "1.0.0-*",
-    "Newtonsoft.Json": "7.0.1"
+    "Newtonsoft.Json": "7.0.1",
+    "NuGet.CommandLine.XPlat": "3.4.0-local-*"
   },
   "frameworks": {
     "dnxcore50": {}
