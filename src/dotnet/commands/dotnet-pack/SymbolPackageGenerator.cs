@@ -12,7 +12,7 @@ namespace Microsoft.DotNet.Tools.Compiler
     public class SymbolPackageGenerator: PackageGenerator
     {
         public SymbolPackageGenerator(Project project, string configuration, ArtifactPathsCalculator artifactPathsCalculator) 
-            : base(project, configuration, artifactPathsCalculator)
+            : base(project, configuration, artifactPathsCalculator, true)
         {
         }
 

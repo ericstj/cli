@@ -13,15 +13,18 @@ namespace Microsoft.DotNet.Tools.Pack
         private readonly IEnumerable<ProjectContext> _contexts;
         private readonly ArtifactPathsCalculator _artifactPathsCalculator;
         private readonly string _configuration;
+        private readonly bool _noTrim;
 
         public PackagesGenerator(
             IEnumerable<ProjectContext> contexts,
             ArtifactPathsCalculator artifactPathsCalculator,
-            string configuration)
+            string configuration,
+            bool noTrim)
         {
             _contexts = contexts;
             _artifactPathsCalculator = artifactPathsCalculator;
             _configuration = configuration;
+            _noTrim = noTrim;
         }
 
         public int Build()
@@ -30,7 +33,7 @@ namespace Microsoft.DotNet.Tools.Pack
 
             var packDiagnostics = new List<DiagnosticMessage>();
 
-            var mainPackageGenerator = new PackageGenerator(project, _configuration, _artifactPathsCalculator);
+            var mainPackageGenerator = new PackageGenerator(project, _configuration, _artifactPathsCalculator, _noTrim);
             var symbolsPackageGenerator = 
                 new SymbolPackageGenerator(project, _configuration, _artifactPathsCalculator);
 

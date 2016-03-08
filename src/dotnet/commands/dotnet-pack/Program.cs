@@ -25,6 +25,7 @@ namespace Microsoft.DotNet.Tools.Compiler
 
             var output = app.Option("-o|--output <OUTPUT_DIR>", "Directory in which to place outputs", CommandOptionType.SingleValue);
             var noBuild = app.Option("--no-build", "Do not build project before packing", CommandOptionType.NoValue);
+            var noTrim = app.Option("--no-trim", "Do not trim unused dependencies from the package", CommandOptionType.NoValue);
             var buildBasePath = app.Option("-b|--build-base-path <OUTPUT_DIR>", "Directory in which to place temporary build outputs", CommandOptionType.SingleValue);
             var configuration = app.Option("-c|--configuration <CONFIGURATION>", "Configuration under which to build", CommandOptionType.SingleValue);
             var versionSuffix = app.Option("--version-suffix <VERSION_SUFFIX>", "Defines what `*` should be replaced with in version field in project.json", CommandOptionType.SingleValue);
@@ -67,7 +68,7 @@ namespace Microsoft.DotNet.Tools.Compiler
                 var project = contexts.First().ProjectFile;
 
                 var artifactPathsCalculator = new ArtifactPathsCalculator(project, buildBasePathValue, outputValue, configValue);
-                var packageBuilder = new PackagesGenerator(contexts, artifactPathsCalculator, configValue);
+                var packageBuilder = new PackagesGenerator(contexts, artifactPathsCalculator, configValue, noTrim.HasValue());
 
                 int buildResult = 0;
                 if (!noBuild.HasValue())

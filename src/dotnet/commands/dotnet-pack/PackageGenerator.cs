@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
 using Microsoft.DotNet.Cli.Utils;
 using Microsoft.DotNet.ProjectModel;
 using Microsoft.DotNet.ProjectModel.Files;
@@ -33,12 +35,15 @@ namespace Microsoft.DotNet.Tools.Compiler
 
         protected PackageBuilder PackageBuilder { get; private set; }
 
-        public PackageGenerator(Project project, string configuration, ArtifactPathsCalculator artifactPathsCalculator)
+        protected bool NoTrim { get; }
+
+        public PackageGenerator(Project project, string configuration, ArtifactPathsCalculator artifactPathsCalculator, bool noTrim)
         {
             ArtifactPathsCalculator = artifactPathsCalculator;
             Project = project;
             Configuration = configuration;
-        }        
+            NoTrim = noTrim;
+        }
 
         public bool BuildPackage(IEnumerable<ProjectContext> contexts, List<DiagnosticMessage> packDiagnostics)
         {
@@ -72,8 +77,6 @@ namespace Microsoft.DotNet.Tools.Compiler
 
         protected virtual void ProcessContext(ProjectContext context)
         {
-            PopulateDependencies(context);
-
             var inputFolder = ArtifactPathsCalculator.InputPathForContext(context);
             var outputName = GetProjectOutputName(context.TargetFramework);
 
@@ -81,6 +84,7 @@ namespace Microsoft.DotNet.Tools.Compiler
                     .Select(resourceFile => ResourceUtility.GetResourceCultureName(resourceFile.Key))
                     .Distinct();
 
+            List<string> outputFiles = new List<string>();
             foreach (var culture in resourceCultures)
             {
                 if (string.IsNullOrEmpty(culture))
@@ -90,10 +94,14 @@ namespace Microsoft.DotNet.Tools.Compiler
 
                 var resourceFilePath = Path.Combine(culture, $"{Project.Name}.resources.dll");
                 TryAddOutputFile(context, inputFolder, resourceFilePath);
+                outputFiles.Add(Path.Combine(inputFolder, resourceFilePath));
             }
 
             TryAddOutputFile(context, inputFolder, outputName);
+            outputFiles.Add(Path.Combine(inputFolder, outputName));
             TryAddOutputFile(context, inputFolder, $"{Project.Name}.xml");
+
+            PopulateDependencies(context, outputFiles);
         }
 
         protected virtual bool GeneratePackage(string nupkg, List<DiagnosticMessage> packDiagnostics)
@@ -250,7 +258,7 @@ namespace Microsoft.DotNet.Tools.Compiler
             });
         }
 
-        private void PopulateDependencies(ProjectContext context)
+        private void PopulateDependencies(ProjectContext context, IEnumerable<string> outputFiles)
         {
             var dependencies = new List<PackageDependency>();
             var project = context.RootProject;
@@ -285,25 +293,66 @@ namespace Microsoft.DotNet.Tools.Compiler
                 }
                 else
                 {
-                    VersionRange dependencyVersion = null;
-
-                    if (dependency.VersionRange == null ||
-                        dependency.VersionRange.IsFloating)
+                    if (NoTrim)
                     {
-                        dependencyVersion = new VersionRange(dependencyDescription.Identity.Version);
+                        VersionRange dependencyVersion = null;
+
+                        if (dependency.VersionRange == null ||
+                            dependency.VersionRange.IsFloating)
+                        {
+                            dependencyVersion = new VersionRange(dependencyDescription.Identity.Version);
+                        }
+                        else
+                        {
+                            dependencyVersion = dependency.VersionRange;
+                        }
+
+                        Reporter.Verbose.WriteLine($"Adding dependency {dependency.Name.Yellow()} {VersionUtility.RenderVersion(dependencyVersion).Yellow()}");
+
+                        dependencies.Add(new PackageDependency(dependency.Name, dependencyVersion));
                     }
-                    else
+                }
+            }
+
+            if (!NoTrim)
+            {
+                HashSet<string> referencedAssemblies = new HashSet<string>();
+                foreach (string outputFile in outputFiles)
+                {
+                    foreach (var reference in GetReferences(outputFile))
                     {
-                        dependencyVersion = dependency.VersionRange;
+                        referencedAssemblies.Add(reference);
                     }
+                }
+                
+                var exporter = context.CreateExporter(Configuration);
 
-                    Reporter.Verbose.WriteLine($"Adding dependency {dependency.Name.Yellow()} {VersionUtility.RenderVersion(dependencyVersion).Yellow()}");
+                foreach (var dependency in exporter.GetDependencies())
+                {
+                    foreach (var compile in dependency.CompilationAssemblies)
+                    {
+                        if (referencedAssemblies.Contains(compile.Name))
+                        {
+                            var dependencyRange = dependency.Library.Identity.ToLibraryRange();
+                            Reporter.Verbose.WriteLine($"Adding dependency {dependencyRange.Name.Yellow()} {VersionUtility.RenderVersion(dependencyRange.VersionRange).Yellow()}");
 
-                    dependencies.Add(new PackageDependency(dependency.Name, dependencyVersion));
+                            dependencies.Add(new PackageDependency(dependencyRange.Name, dependencyRange.VersionRange));
+                            break;
+                        }
+                    }
                 }
             }
 
             PackageBuilder.DependencySets.Add(new PackageDependencySet(context.TargetFramework, dependencies));
+        }
+        
+        private static IEnumerable<string> GetReferences(string outputFile)
+        {
+            using (PEReader peReader = new PEReader(new FileStream(outputFile, FileMode.Open, FileAccess.Read, FileShare.Delete | FileShare.Read)))
+            {
+                MetadataReader reader = peReader.GetMetadataReader();
+                return reader.AssemblyReferences.Select(r => reader.GetString(reader.GetAssemblyReference(r).Name));
+            }
         }
 
         protected virtual string GetPackageName()
